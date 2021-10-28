@@ -39,7 +39,12 @@ def handle_books():
 
     elif request.method == "GET":
         # query method returns a list of instances of books
-        books = Book.query.all()
+        title_query = request.args.get("title")
+        description_query = request.args.get("description")
+        if title_query:
+            books = Book.query.filter_by(title=title_query)
+        else:
+            books = Book.query.all()
         books_response = []
         for book in books:
             books_response.append({
@@ -49,18 +54,39 @@ def handle_books():
             })
         return jsonify(books_response)
 
-@books_bp.route("/<book_id>", methods = ["GET"])
+@books_bp.route("/<book_id>", methods = ["GET", "PUT", "DELETE"])
 def handle_book(book_id):
     book = Book.query.get(book_id)
     # Edge case: if requested book_id not found
     if book is None:
-        return make_response(f"Book {book_id} not found", 404)
-    # Flask returns dict into a response obj for us
-    return {
-        "id":book.id,
-        "title":book.title,
-        "description": book.description
-    }
+            return make_response(f"Book {book_id} not found", 404)
+    if request.method == "GET":
+        # Flask returns dict into a response obj for us
+        return {
+            "id":book.id,
+            "title":book.title,
+            "description": book.description
+        }
+    elif request.method == "PUT":
+        form_data = request.get_json()
+        if "title" not in form_data or "description" not in form_data:
+            return {"message": "Request requires both title and description"}, 400
+        elif book is None:
+            return make_response(f"Book {book_id} not found", 404)
+
+        else:
+            book.title = form_data["title"]
+            book.description = form_data["description"]
+
+            # Save action
+            db.session.commit()
+
+            return make_response(f"Book #{book.id} successfully updated")  
+
+    elif request.method == "DELETE":
+        db.session.delete(book)
+        db.session.commit()
+        return make_response (f"Book #{book.id} successfully deleted", 200)  
 
 # only accepts GET requests
 @hello_world_bp.route("/hello-world", methods = ["GET"])
