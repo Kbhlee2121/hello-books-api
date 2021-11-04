@@ -25,8 +25,10 @@ def handle_books():
         #     description_body = "no description"
 
 
-        new_book = Book(title=request_body["title"],
-                        description = request_body["description"])
+        new_book = Book(
+            title=request_body["title"],
+            description = request_body["description"]
+            )
 
 
         # staging changes like git add
@@ -114,6 +116,36 @@ def read_all_authors():
             "name":author.name
         })
     return jsonify(authors_response)
+
+@authors_bp.route("/<author_id>/books", methods=["GET","POST"])
+def handle_authors_books(author_id):
+    author = Author.query.get(author_id)
+    if author is None:
+        return make_response("Author not found", 404)
+    if request.method == "POST":
+        request_body = request.get_json()
+        new_book = Book(
+            title=request_body["title"],
+            description=request_body["description"],
+            author=author
+        )
+
+        db.session.add(new_book)
+        db.session.commit()
+
+        return make_response(f"Book {new_book.title} by {new_book.author.name} successfully created", 201)
+
+    elif request.method == "GET":
+        books_response = []
+        for book in author.books:
+            books_response.append({
+                "id":book.id,
+                "title":book.title,
+                "description": book.description,
+
+            })
+        return jsonify(books_response)
+        
 
 
 
