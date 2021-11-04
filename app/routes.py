@@ -1,10 +1,12 @@
 from werkzeug.exceptions import MethodNotAllowed
 from app import db
 from app.models.book import Book
+from app.models.author import Author
 from flask import Blueprint, jsonify, make_response, request
 
 hello_world_bp = Blueprint("hello_world", __name__)
 books_bp = Blueprint("books", __name__, url_prefix="/books")
+authors_bp = Blueprint("authors",__name__,url_prefix="/authors")
 
 @books_bp.route("", methods = ["POST", "GET"])
 def handle_books():
@@ -88,6 +90,33 @@ def handle_book(book_id):
         db.session.commit()
         return make_response (f"Book #{book.id} successfully deleted", 200)  
 
+# AUTHOR ROUTES
+
+@authors_bp.route("", methods=["POST"])
+def create_author():
+    request_body = request.get_json()
+    if "name" not in request_body:
+        return make_response("Invalid Request", 400)
+
+    new_author = Author(name=request_body["name"])
+
+    db.session.add(new_author)
+    db.session.commit()
+    return make_response(f"Author {new_author.name} successfully created", 201)
+
+@authors_bp.route("", methods = ["GET"])
+def read_all_authors():
+    authors = Author.query.all()
+    authors_response = []
+    for author in authors:
+        authors_response.append({
+            "id": author.id,
+            "name":author.name
+        })
+    return jsonify(authors_response)
+
+
+
 # only accepts GET requests
 @hello_world_bp.route("/hello-world", methods = ["GET"])
 def get_hello_world():
@@ -112,3 +141,4 @@ def broken_endpoint():
     new_hobby = "Surfing"
     response_body["hobbies"].append(new_hobby)
     return response_body
+
