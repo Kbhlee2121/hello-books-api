@@ -2,11 +2,13 @@ from werkzeug.exceptions import MethodNotAllowed
 from app import db
 from app.models.book import Book
 from app.models.author import Author
+from app.models.genre import Genre
 from flask import Blueprint, jsonify, make_response, request
 
 hello_world_bp = Blueprint("hello_world", __name__)
 books_bp = Blueprint("books", __name__, url_prefix="/books")
 authors_bp = Blueprint("authors",__name__,url_prefix="/authors")
+genres_bp = Blueprint("genres", __name__, url_prefix="/genres")
 
 @books_bp.route("", methods = ["POST", "GET"])
 def handle_books():
